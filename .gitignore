@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+*.log
+*.bak
+*.backup
+__pycache__/
+node_modules/
+.agent-output/
+.codex/auth.json
+.codex/config.toml
+.codex/sessions/
+.codex/history.jsonl
+.codex/log/
+.DS_Store
+Thumbs.db

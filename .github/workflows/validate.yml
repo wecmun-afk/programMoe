@@ -1,0 +1,24 @@
+name: Validate setup
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-checks:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Config, catalog, links and credential-pattern checks
+        shell: pwsh
+        run: python tests/test_config.py
+      - name: Windows PowerShell 5.1 offline checks
+        shell: powershell
+        run: ./tests/test-scripts.ps1
+      - name: PowerShell 7 offline checks
+        shell: pwsh
+        run: ./tests/test-scripts.ps1

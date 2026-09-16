@@ -1,0 +1,21 @@
+# Merge deliberately; never overwrite existing user configuration wholesale.
+model = "gpt-6-astra"
+model_provider = "openai"
+model_reasoning_effort = "medium"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[features]
+multi_agent = true
+
+[agents]
+enabled = true
+# Native subagents only; this does NOT limit separate PowerShell workers.
+max_concurrent_threads_per_session = 4
+
+[model_providers.deepseek]
+name = "DeepSeek"
+base_url = "https://api.deepseek.com"
+env_key = "DEEPSEEK_API_KEY"
+wire_api = "responses"
+requires_openai_auth = false

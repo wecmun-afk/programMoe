@@ -1,0 +1,38 @@
+{
+  "models": [
+    {
+      "slug": "deepseek-flash",
+      "display_name": "DeepSeek Flash",
+      "description": "ProgramMoe bounded worker with text and image input.",
+      "default_reasoning_level": "low",
+      "supported_reasoning_levels": [
+        {"effort": "low", "description": "Routine bounded tasks"},
+        {"effort": "high", "description": "More demanding analysis"},
+        {"effort": "max", "description": "Explicitly requested maximum effort"}
+      ],
+      "shell_type": "shell_command",
+      "visibility": "list",
+      "supported_in_api": true,
+      "priority": 1,
+      "availability_nux": null,
+      "upgrade": null,
+      "model_messages": {
+        "instructions_template": "You are a bounded coding assistant. Inspect relevant files before proposing changes. Follow the assigned role, repository instructions and sandbox limits. Do not launch additional agents. Do not print credentials. Report evidence, changes, tests and unresolved issues honestly."
+      },
+      "supports_reasoning_summary_parameter": false,
+      "default_reasoning_summary": "none",
+      "support_verbosity": false,
+      "default_verbosity": null,
+      "apply_patch_tool_type": "freeform",
+      "truncation_policy": {"mode": "tokens", "limit": 10000},
+      "context_window": 1048576,
+      "max_context_window": 1048576,
+      "effective_context_window_percent": 95,
+      "experimental_supported_tools": [],
+      "input_modalities": ["text", "image"],
+      "supports_image_detail_original": true,
+      "prefer_websockets": false,
+      "supports_parallel_tool_calls": true
+    }
+  ]
+}
