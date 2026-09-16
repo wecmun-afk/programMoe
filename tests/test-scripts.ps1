@@ -37,22 +37,28 @@ try {
     Assert-True ($result.Arguments -contains 'agents.enabled=false') 'Workers disable native delegation'
     Assert-True ($result.Arguments -contains '-') 'Task uses stdin'
     $env:DEEPSEEK_API_KEY = 'test-placeholder-not-a-real-key'
-    $script:mockExit = 0
+    # The mock is called from a separate script. Explicit shared state avoids
+    # resolving script-scoped variables against the launcher instead of this test.
+    $global:ProgramMoeTestExit = 0
+    $global:ProgramMoeTestArgs = @()
+    $global:ProgramMoeTestPrompt = ''
     function global:codex {
-        $script:capturedArgs = @($args)
-        $script:capturedPrompt = $input | Out-String
-        $global:LASTEXITCODE = $script:mockExit
+        $global:ProgramMoeTestArgs = @($args)
+        $global:ProgramMoeTestPrompt = $input | Out-String
+        $global:LASTEXITCODE = $global:ProgramMoeTestExit
         'MOCK_WORKER_OK'
     }
     $null = & $launcher -Role researcher -TaskFile $taskFile -ProjectPath $root
-    Assert-True ($script:capturedPrompt.Contains($taskText)) 'Unicode and quoted task preserved in stdin'
-    Assert-True ($script:capturedArgs -contains 'model_provider=deepseek') 'Explicit child provider'
-    $script:mockExit = 7; $failed = $false
-    try { $null = & $launcher -Role researcher -Task 'Failure check' -ProjectPath $root } catch { $failed = $true }
-    Assert-True $failed 'Nonzero CLI exit causes failure'
+    Assert-True ($global:ProgramMoeTestPrompt.Contains($taskText)) 'Unicode and quoted task preserved in stdin'
+    Assert-True ($global:ProgramMoeTestArgs -contains 'model_provider=deepseek') 'Explicit child provider'
+    $global:ProgramMoeTestExit = 7; $failed = $false
+    try { $null = & $launcher -Role researcher -Task 'Failure check' -ProjectPath $root }
+    catch { $failed = $_.Exception.Message -like '*exit code 7*' }
+    Assert-True $failed 'Nonzero CLI exit causes the expected failure'
     $env:DEEPSEEK_API_KEY = ''; $failed = $false
-    try { $null = & $launcher -Role researcher -Task 'Key check' -ProjectPath $root } catch { $failed = $true }
-    Assert-True $failed 'Missing key is rejected'
+    try { $null = & $launcher -Role researcher -Task 'Key check' -ProjectPath $root }
+    catch { $failed = $_.Exception.Message -like '*DEEPSEEK_API_KEY is not set*' }
+    Assert-True $failed 'Missing key is rejected with the expected error'
     [IO.File]::AppendAllText($launcher, "`n# changed fixture")
     & (Join-Path $root 'scripts/install.ps1')
     Assert-True (@(Get-ChildItem -LiteralPath (Split-Path -Parent $launcher) -Filter '*.bak').Count -gt 0) 'Changed files are backed up'
@@ -61,7 +67,11 @@ try {
     Assert-True (Test-Path -LiteralPath (Join-Path $freshHome 'config.toml')) 'Fresh config is created'
 } finally {
     Remove-Item Function:\codex -ErrorAction SilentlyContinue
+    Remove-Variable ProgramMoeTestExit, ProgramMoeTestArgs, ProgramMoeTestPrompt -Scope Global -ErrorAction SilentlyContinue
     $env:CODEX_HOME = $oldHome; $env:DEEPSEEK_API_KEY = $oldKey
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }
 }
+# The mock deliberately set exit code 7 during a passing negative test.
+# Clear it only after ALL assertions and cleanup succeed; throws skip this line.
+$global:LASTEXITCODE = 0
 Write-Host 'All offline PowerShell checks passed. No real API calls were made.'
